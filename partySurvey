@@ -1,0 +1,307 @@
+import java.util.Scanner;
+import java.util.HashMap;
+import java.io.*;
+
+
+public class Survey {
+    
+    /* Gloval variables are declared below which are used in the various methods that are created.
+     * Also, a scanner object and hash map are created globally because they will be used in various methods.
+     */
+    public static int answer;
+    public static HashMap<Integer, String> questions = new HashMap<Integer, String>();
+    public static Scanner scanner = new Scanner(System.in);
+    public static int dem;
+    public static int rep;
+    public static int lib;
+    public static int gre;
+
+    public static void main (String[] args) {
+        /*Variable are initialized at the start of the main function to insure information integrety. */
+        dem = 0;
+        rep = 0;
+        lib = 0;
+        gre = 0;
+        fillQuestions();        //method used to fill the hash table with the questions used in gathering data
+        int lines = 1;
+        String fileName = "";
+        String leadingParty = "";
+        int leadingValue = 0;
+        int average = 0;
+        
+        /*The following for-loop loops through the questions and displays them to the user. */
+        for(int i = 1; i <= 10; i++){
+            ask(i, questions);
+            /*The following if statement seeks to make a prediction on the user's political party if the requirements are met.
+             * The prediction attempt happens at the 5th and 8th question, as long as the data storage files have at least 5 tests
+             * of data stored.
+             */
+            if(i == 5 || i == 8){  
+                /*The following if statement finds which party is leading in points for the current iteration
+                 * of the test. It then sets up the parameters needed which will be used to read file data
+                 * and make predictions on the user's politcal party.
+                 */
+                if((dem > rep) && (dem > lib) && (dem > gre)){
+                    fileName = "Democrat.txt";
+                    leadingParty = "Democrat";
+                } else if((rep > dem) && (rep > lib) && (rep > gre)){
+                    fileName = "Republican.txt";
+                    leadingParty = "Republican";
+                } else if((lib > dem) && (lib > rep) && (lib > gre)){
+                    fileName = "Libertarian.txt";
+                    leadingParty = "Libertarian";
+                } else if((gre > dem) && (gre > rep) && (gre > lib)){
+                    fileName = "Green.txt";
+                    leadingParty = "Green";
+                }
+                /* This switch statement takes the leadingParty string and assigns that party 
+                 * to a variable that holds the value of the party with the most points in the current iteration.
+                 */
+                switch(leadingParty){
+                    case "Democrat":
+                        leadingValue = dem;
+                        break;
+                    case "Republican":
+                        leadingValue = rep;
+                        break;
+                    case "Libertarian":
+                        leadingValue = lib;
+                        break;
+                    case "Green":
+                        leadingValue = gre;
+                        break;
+                    default:
+                    break;
+                }
+                /*A try catch block is used to attempt to read the amount of lines of data in the file
+                 * which is leading in points. If a storage file representing the political party does not
+                 * exist, it will be created.
+                 */
+                try {
+                    try {
+                        lines = lines(fileName);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    /*This if statement is used to predict the user's political party if the crieria are met.
+                     * The criteria include the amount of lines in a storage file being over 5 lines,
+                     * as well as the leading value of the current iteration being larger than the average
+                     * of the values in the storage files.
+                     */
+                    if (lines >= 5){
+                        average = findAverage(fileName, lines);
+                        if(leadingValue >= average){
+                            System.out.println("Your party is " + leadingParty + "\n");
+                        }
+                        /* If an accurate prediction can be made, missing data is compensated for and written
+                         * into the storage file.
+                         */
+                        if (i == 5) {
+                            write("Democrat.txt", dem * 2);
+                            write("Republican.txt", rep * 2);
+                            write("Libertarian.txt", lib * 2);
+                            write("Green.txt", gre * 2);
+                        } else if (i == 8){
+                            write("Democrat.txt", dem);
+                            write("Republican.txt", rep);
+                            write("Libertarian.txt", lib);
+                            write("Green.txt", gre);
+                        }
+                            System.exit(0); //The program is closed if the prediction can be made
+                    }
+                } catch (FileNotFoundException e) {
+                    File file = new File(fileName); //If file is not found, the new file is created
+                    e.printStackTrace();
+                    
+
+                } catch (ArithmeticException ex) {  
+                    ex.printStackTrace(); 
+                }
+            }
+        }
+        /*Before the program is able to make a prediction, it must collect a sufficient amount of data.
+         * Here we ensure that the collected data is written into a program if a prediction can not be made yet.
+         */
+        write("Democrat.txt", dem);
+        write("Republican.txt", rep);
+        write("Libertarian.txt", lib);
+        write("Green.txt", gre);
+    }
+    /*This method fills a hashmap with the survey questions */
+    private static void fillQuestions(){
+        questions.put(1, """
+            What is your view on the role of government in regulating business?
+            1. Strong government oversight is necessary to protect consumers.
+            2. The government should have a limited role in regulating businesses.
+            3. The market should regulate itself without government interference.
+            4. Businesses should be required to adhere to strict environmental regulations.
+            """);
+        questions.put(2, """
+            What is your position on healthcare reform?
+            1. Universal healthcare coverage is a fundamental right.
+            2. Healthcare should be left to the free market with minimal government intervention.
+            3. Healthcare should be reformed to promote competition and reduce costs.
+            4. Individuals should have more control over their healthcare decisions and costs.
+            """);
+        questions.put(3, """
+            What is your stance on gun control?
+            1. There should be more regulation of guns to reduce gun violence.
+            2. The second amendment guarantees the right to bear arms and should be upheld.
+            3. Gun ownership should be allowed but regulated.
+            4. Gun ownership should be prohibited in most circumstances.
+            """);
+        questions.put(4, """
+            What is your view on abortion?
+            1. A woman has the right to choose what happens to her own body.
+            2. Abortion should be illegal except in cases of rape, incest, or to save the life of the mother.
+            3. Abortion should be allowed but regulated.
+            4. Abortion should be illegal in all circumstances.
+            """);
+        questions.put(5, """
+            What is your opinion on climate change?
+            1. Climate change is a serious issue that requires immediate action by the government.
+            2. Climate change is a natural process and should not be a focus of government policy.
+            3. Climate change is a problem, but solutions should focus on free market approaches.
+            4. Climate change is not a significant issue.
+            """);
+        questions.put(6, """
+            What is your view on immigration?
+            1. Immigration is an important part of America's history and should be encouraged.
+            2. The government should focus on securing the border and enforcing existing immigration laws.
+            3. Immigration policy should be reformed to allow more legal immigration.
+            4. Immigration should be restricted to protect American jobs and culture.
+            """);
+        questions.put(7, """
+            What is your stance on taxes?
+            1. Taxes should be increased on the wealthy to fund social programs.
+            2. Taxes should be reduced to stimulate economic growth.
+            3. The tax system should be simplified and made fairer for all Americans.
+            4. Taxes should be eliminated altogether.
+            """);
+        questions.put(8, """
+            What is your opinion on the minimum wage?
+            1. The minimum wage should be increased to provide a living wage for all workers.
+            2. The minimum wage should be eliminated to allow businesses to compete and grow.
+            3. The minimum wage should be reformed to be more flexible based on regional cost of living.
+            4. The minimum wage should be reduced to promote job growth.
+            """);
+        questions.put(9, """
+            What is your view on education policy?
+            1. The government should invest more in public education to improve outcomes for all students.
+            2. Education policy should focus on increasing school choice and competition.
+            3. Education policy should be reformed to provide more vocational training and practical skills.
+            4. Education should be left to the free market without government intervention.
+            """);
+        questions.put(10, """
+            What political party do you associate with?
+            1. Democratic
+            2. Republican
+            3. Libertarian
+            4. Green
+            """);
+    }
+    /*This method is used to determine how many lines are in a file. At least 5 lines of storage data are needed
+     * for the program to begin making predictions.
+     */
+    private static int lines(String fileName) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        int lines = 0;
+        try {
+            while (reader.readLine() != null){
+            lines++;
+        }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        reader.close();
+        return lines;
+    }
+    /*The following method reads lines of data and stores them in an integer value. It then
+     * returns the integer stored divided by the number of lines in the file to determine
+     * the average of the data which is used to make predictions.
+     */
+    private static int findAverage(String fileName, int lines) throws FileNotFoundException{
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        int average = 0;
+        try {
+            while (reader.readLine() != null){
+            average += Integer.parseInt(reader.readLine());
+            reader.close();
+            }
+        } catch (IOException e) {
+        } catch (NumberFormatException ex){
+            ex.printStackTrace();
+        }
+        return average / lines;
+    }
+    
+    private static void write(String fileName, int total){
+        try {
+            BufferedWriter bw = new BufferedWriter(
+                new FileWriter(fileName,true));
+            bw.write(total + "\n");
+            bw.close();
+            } catch(Exception e) {
+                e.printStackTrace();
+        }
+    }
+    /* This is the method that is used to ask the survey questions. The conditions inside of this method are used
+     * throughout the method to ensure that the user's input is of a valid data type which can be used for this
+     * program to make predictions.
+     */
+    private static void ask(int key, HashMap<Integer, String> q){
+        boolean condition = false;      
+        String dumpScan = "";       //this variable is used to hold unhelpful string scanner input
+        /* This while loop is used to ask questions and store answers. If the required conditions have not been met,
+         * the loop will display an error message to the user and iterate again.
+         */
+        while(condition == false){
+            System.out.print(q.get(key) + "\n");
+            boolean condition2 = false;
+            while(!condition2) {       
+                if(scanner.hasNextInt()){
+                answer = scanner.nextInt();
+                    if((answer == 1) || (answer == 2) || (answer == 3) || (answer == 4)) {
+                        condition2 = true;
+                        break;
+                    } else {
+                        System.out.println("\nError, please enter a number 1 2 3 or 4.\n");
+                    }
+                } else {
+                System.out.println("\nError, please enter a number 1 2 3 or 4.\n");
+                dumpScan = scanner.next();
+                System.out.print(q.get(key) + "\n");
+                }
+            }
+            /*The following switch statement is used to weigh answers. The party which the user's answer most closely
+             * represents will recieve more points than the party which the user's answer slightly
+             * represents.
+             */
+            switch(answer) {
+                case 1:
+                    dem += 5;
+                    lib += 2;
+                    condition = true;
+                    break;
+                case 2:
+                    rep += 5;
+                    gre += 2;
+                    condition = true;
+                    break;
+                case 3:
+                    dem += 2;
+                    lib += 5;
+                    condition = true;
+                    break;
+                case 4:
+                    rep += 2;
+                    gre += 5;
+                    condition = true;
+                    break;
+                default:
+                    System.out.println("\nError. Answer with either 1 2 3 or 4. \n");
+                    break;
+                }
+            }
+    }
+}
